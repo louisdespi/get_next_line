@@ -6,7 +6,7 @@
 /*   By: lode-spi <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/06 08:43:31 by lode-spi          #+#    #+#             */
-/*   Updated: 2018/07/22 00:47:15 by lode-spi         ###   ########.fr       */
+/*   Updated: 2018/10/11 22:04:39 by lode-spi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,10 @@
 # include <sys/stat.h>
 # include <fcntl.h>
 # include <unistd.h>
+
+# define ERROR -1
+# define END_OF_FILE 0
+# define SUCCESS 1
 
 typedef struct	s_filesaved
 {

@@ -6,7 +6,7 @@
 /*   By: lode-spi <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/20 14:05:14 by lode-spi          #+#    #+#             */
-/*   Updated: 2018/07/22 00:42:21 by lode-spi         ###   ########.fr       */
+/*   Updated: 2018/10/11 22:24:36 by lode-spi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,9 +44,11 @@ static char			*update_file_state(t_filesaved *curr)
 		return (NULL);
 	if (tmp && (nwl = ft_strchr(tmp, '\n')))
 	{
-		tmp = ft_strsub(tmp, 0, nwl - tmp);
+		if (!(tmp = ft_strsub(tmp, 0, nwl - tmp)))
+			return (NULL);
 		ft_strdel(&(curr->remaining));
-		curr->remaining = ft_strdup(nwl + 1);
+		if (!(curr->remaining = ft_strdup(nwl + 1)))
+			return (NULL);
 		return (tmp);
 	}
 	return (NULL);
@@ -54,11 +56,20 @@ static char			*update_file_state(t_filesaved *curr)
 
 static char			*strforcecat(char **s1, const char *s2)
 {
+	char	*ret;
+
 	if (!(*s1))
-		return (ft_strdup(s2));
+	{
+		if (!(ret = ft_strdup(s2)))
+			return (NULL);
+	}
 	else
-		return (ft_strjoin(*s1, s2));
+	{
+		if (!(ret = ft_strjoin(*s1, s2)))
+			return (NULL);
+	}
 	ft_strdel(s1);
+	return (ret);
 }
 
 int					get_next_line(const int fd, char **line)
@@ -69,23 +80,26 @@ int					get_next_line(const int fd, char **line)
 	t_filesaved		*curr;
 
 	if (!line || fd < 0 || !(curr = get_file(fd, &list)))
-		return (-1);
+		return (ERROR);
 	if ((*line = update_file_state(curr)))
-		return (1);
+		return (SUCCESS);
 	while ((read_bytes = read(fd, buf, BUFF_SIZE)))
 	{
 		if (read_bytes < 0)
-			return (-1);
+			return (ERROR);
 		buf[read_bytes] = '\0';
-		curr->remaining = strforcecat(&(curr->remaining), buf);
+		if (!(curr->remaining = strforcecat(&(curr->remaining), buf)))
+			return (ERROR);
 		if ((*line = update_file_state(curr)))
-			return (1);
+			return (SUCCESS);
 	}
 	if (curr->remaining && *(curr->remaining))
 	{
-		*line = ft_strdup(curr->remaining);
+		ft_putendl("End of file reached");
+		if (!(*line = ft_strdup(curr->remaining)))
+			return (ERROR);
 		ft_strdel(&(curr->remaining));
-		return (1);
+		return (SUCCESS);
 	}
-	return (0);
+	return (END_OF_FILE);
 }
