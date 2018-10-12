@@ -6,13 +6,13 @@
 /*   By: lode-spi <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/20 14:05:14 by lode-spi          #+#    #+#             */
-/*   Updated: 2018/10/11 22:24:36 by lode-spi         ###   ########.fr       */
+/*   Updated: 2018/10/12 16:20:52 by lode-spi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-static t_filesaved	*get_file(const int fd, t_list **list)
+static t_list	*get_file(const int fd, t_list **list)
 {
 	t_list		*curr;
 	t_filesaved	*elt;
@@ -21,7 +21,7 @@ static t_filesaved	*get_file(const int fd, t_list **list)
 	while (curr)
 	{
 		if (((t_filesaved*)curr->content)->fd == fd)
-			return (((t_filesaved*)curr->content));
+			return (curr);
 		curr = curr->next;
 	}
 	if (!(elt = (t_filesaved*)malloc(sizeof(*elt))))
@@ -30,27 +30,31 @@ static t_filesaved	*get_file(const int fd, t_list **list)
 	elt->remaining = NULL;
 	if (!(curr = ft_lstnew(elt, sizeof(*elt))))
 		return (NULL);
+	free(elt);
 	ft_lstadd(list, curr);
-	return (((t_filesaved*)curr->content));
+	return (curr);
 }
 
 static char			*update_file_state(t_filesaved *curr)
 {
 	char	*nwl;
-	char	*tmp;
+	char	*t;
+	char	*r;
 
-	tmp = NULL;
-	if (curr->remaining && !(tmp = ft_strdup(curr->remaining)))
+	r = NULL;
+	if (curr->remaining && !(r = ft_strdup(curr->remaining)))
 		return (NULL);
-	if (tmp && (nwl = ft_strchr(tmp, '\n')))
+	if (r && (nwl = ft_strchr(r, '\n')))
 	{
-		if (!(tmp = ft_strsub(tmp, 0, nwl - tmp)))
+		if (!(t = ft_strsub(r, 0, nwl - r)))
 			return (NULL);
 		ft_strdel(&(curr->remaining));
 		if (!(curr->remaining = ft_strdup(nwl + 1)))
 			return (NULL);
-		return (tmp);
+		ft_strdel(&r);
+		return (t);
 	}
+	ft_strdel(&r);
 	return (NULL);
 }
 
@@ -72,34 +76,67 @@ static char			*strforcecat(char **s1, const char *s2)
 	return (ret);
 }
 
+void				free_list_element(t_list **alst, t_list *to_delete)
+{
+	t_list	*t;
+	t_list	*cursor;
+
+	cursor = *alst;
+	if (cursor == to_delete)
+	{
+		t = cursor->next;
+		ft_strdel(&((t_filesaved*)cursor->content)->remaining);
+		free(((t_filesaved*)cursor->content));
+		free(cursor);
+		*alst = t;
+		return ;
+	}
+	while (cursor)
+	{
+		if (cursor->next == to_delete)
+		{
+			t = cursor;
+			cursor = cursor->next;
+			t->next = cursor->next;
+			ft_strdel(&((t_filesaved*)cursor->content)->remaining);
+			free(((t_filesaved*)cursor->content));
+			free(cursor);
+			return ;
+		}
+		cursor = cursor->next;
+	}
+}
+
 int					get_next_line(const int fd, char **line)
 {
 	char			buf[BUFF_SIZE + 1];
 	int				read_bytes;
 	static t_list	*list = NULL;
-	t_filesaved		*curr;
+	t_list			*curr_listitem;
+	t_filesaved		*curr_item;
 
-	if (!line || fd < 0 || !(curr = get_file(fd, &list)))
+	if (!line || fd < 0 || !(curr_listitem = get_file(fd, &list)))
 		return (ERROR);
-	if ((*line = update_file_state(curr)))
+	curr_item = ((t_filesaved*)curr_listitem->content);
+	if ((*line = update_file_state((curr_item))))
 		return (SUCCESS);
 	while ((read_bytes = read(fd, buf, BUFF_SIZE)))
 	{
 		if (read_bytes < 0)
 			return (ERROR);
 		buf[read_bytes] = '\0';
-		if (!(curr->remaining = strforcecat(&(curr->remaining), buf)))
+		if (!(curr_item->remaining = strforcecat(&(curr_item->remaining), buf)))
 			return (ERROR);
-		if ((*line = update_file_state(curr)))
+		if ((*line = update_file_state(curr_item)))
 			return (SUCCESS);
 	}
-	if (curr->remaining && *(curr->remaining))
+	if (curr_item->remaining && *(curr_item->remaining))
 	{
-		ft_putendl("End of file reached");
-		if (!(*line = ft_strdup(curr->remaining)))
+		if (!(*line = ft_strdup(curr_item->remaining)))
 			return (ERROR);
-		ft_strdel(&(curr->remaining));
+		ft_strdel(&(curr_item->remaining));
 		return (SUCCESS);
 	}
+	free_list_element(&list, curr_listitem);
 	return (END_OF_FILE);
 }
