@@ -6,7 +6,7 @@
 /*   By: lode-spi <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/06/11 08:46:39 by lode-spi          #+#    #+#             */
-/*   Updated: 2018/07/01 11:31:28 by lode-spi         ###   ########.fr       */
+/*   Updated: 2018/10/15 18:24:38 by lode-spi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,7 @@ int				ft_isascii(int c);
 int				ft_isprint(int c);
 int				ft_toupper(int c);
 int				ft_tolower(int c);
+char			*ft_strforcecat(char *s1, char *s2);
 
 void			*ft_memalloc(size_t size);
 void			ft_memdel(void **ap);

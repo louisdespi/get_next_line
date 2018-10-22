@@ -6,13 +6,13 @@
 /*   By: lode-spi <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/20 14:05:14 by lode-spi          #+#    #+#             */
-/*   Updated: 2018/10/12 16:20:52 by lode-spi         ###   ########.fr       */
+/*   Updated: 2018/10/22 14:43:21 by lode-spi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-static t_list	*get_file(const int fd, t_list **list)
+static t_list		*get_file(const int fd, t_list **list)
 {
 	t_list		*curr;
 	t_filesaved	*elt;
@@ -58,78 +58,72 @@ static char			*update_file_state(t_filesaved *curr)
 	return (NULL);
 }
 
-static char			*strforcecat(char **s1, const char *s2)
+static int			reading_loop(const int fd, char **line, t_filesaved *t)
 {
-	char	*ret;
+	char	buf[BUFF_SIZE + 1];
+	int		read_bytes;
+	char	*tmp;
 
-	if (!(*s1))
+	tmp = NULL;
+	while ((read_bytes = read(fd, buf, BUFF_SIZE)))
 	{
-		if (!(ret = ft_strdup(s2)))
-			return (NULL);
+		if (read_bytes < 0)
+			return (ERROR);
+		buf[read_bytes] = 0;
+		if (t->remaining && !(tmp = ft_strdup(t->remaining)))
+			return (ERROR);
+		ft_strdel(&(t->remaining));
+		if (!(t->remaining = ft_strforcecat(tmp, buf)))
+			return (ERROR);
+		ft_strdel(&tmp);
+		if ((*line = update_file_state(t)))
+			return (SUCCESS);
 	}
-	else
-	{
-		if (!(ret = ft_strjoin(*s1, s2)))
-			return (NULL);
-	}
-	ft_strdel(s1);
-	return (ret);
+	return (2);
 }
 
-void				free_list_element(t_list **alst, t_list *to_delete)
+static void			free_list_element(t_list **alst, t_list *to_delete)
 {
 	t_list	*t;
 	t_list	*cursor;
 
 	cursor = *alst;
 	if (cursor == to_delete)
+		*alst = cursor->next;
+	else
 	{
-		t = cursor->next;
-		ft_strdel(&((t_filesaved*)cursor->content)->remaining);
-		free(((t_filesaved*)cursor->content));
-		free(cursor);
-		*alst = t;
-		return ;
-	}
-	while (cursor)
-	{
-		if (cursor->next == to_delete)
+		while (cursor)
 		{
-			t = cursor;
+			if (cursor->next == to_delete)
+			{
+				t = cursor;
+				cursor = cursor->next;
+				t->next = cursor->next;
+				break ;
+			}
 			cursor = cursor->next;
-			t->next = cursor->next;
-			ft_strdel(&((t_filesaved*)cursor->content)->remaining);
-			free(((t_filesaved*)cursor->content));
-			free(cursor);
-			return ;
 		}
-		cursor = cursor->next;
 	}
+	ft_strdel(&((t_filesaved*)cursor->content)->remaining);
+	free(((t_filesaved*)cursor->content));
+	free(cursor);
 }
 
 int					get_next_line(const int fd, char **line)
 {
-	char			buf[BUFF_SIZE + 1];
-	int				read_bytes;
 	static t_list	*list = NULL;
 	t_list			*curr_listitem;
 	t_filesaved		*curr_item;
+	int				rd;
 
 	if (!line || fd < 0 || !(curr_listitem = get_file(fd, &list)))
 		return (ERROR);
 	curr_item = ((t_filesaved*)curr_listitem->content);
 	if ((*line = update_file_state((curr_item))))
 		return (SUCCESS);
-	while ((read_bytes = read(fd, buf, BUFF_SIZE)))
-	{
-		if (read_bytes < 0)
-			return (ERROR);
-		buf[read_bytes] = '\0';
-		if (!(curr_item->remaining = strforcecat(&(curr_item->remaining), buf)))
-			return (ERROR);
-		if ((*line = update_file_state(curr_item)))
-			return (SUCCESS);
-	}
+	rd = reading_loop(fd, line, curr_item);
+	if (rd != 2)
+		return (rd);
 	if (curr_item->remaining && *(curr_item->remaining))
 	{
 		if (!(*line = ft_strdup(curr_item->remaining)))

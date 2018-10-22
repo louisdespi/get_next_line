@@ -6,7 +6,7 @@
 #    By: lode-spi <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2018/06/11 13:58:35 by lode-spi          #+#    #+#              #
-#    Updated: 2018/07/22 00:46:03 by lode-spi         ###   ########.fr        #
+#    Updated: 2018/10/15 18:30:48 by lode-spi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,7 +28,8 @@ SRCS = ft_atoi.c ft_bzero.c ft_isalnum.c ft_isalpha.c ft_isascii.c \
 	   ft_strnew.c ft_strnstr.c ft_strrchr.c ft_strsplit.c         \
 	   ft_strstr.c ft_strsub.c ft_strtrim.c ft_tolower.c           \
 	   ft_toupper.c ft_putendl_fd.c ft_putnbr_fd.c ft_lstaddback.c \
-	   ft_lstsize.c ft_min_array.c ft_max_array.c ft_max.c
+	   ft_lstsize.c ft_min_array.c ft_max_array.c ft_max.c         \
+	   ft_strforcecat.c
 OBJS = $(SRCS:.c=.o)
 
 all : $(NAME)
